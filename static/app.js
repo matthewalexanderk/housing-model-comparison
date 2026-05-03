@@ -27,6 +27,7 @@ function loadProgress() {
     const saved = JSON.parse(localStorage.getItem("pythonQuestProgress") || "[]");
     state.progress = new Set(saved);
   } catch (error) {
+    console.warn("Unable to read saved progress, resetting progress data.");
     state.progress = new Set();
   }
 }

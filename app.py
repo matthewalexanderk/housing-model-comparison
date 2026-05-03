@@ -5,6 +5,7 @@ import contextlib
 import io
 import json
 import multiprocessing
+import os
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from functools import partial
 from pathlib import Path
@@ -17,6 +18,7 @@ LEVELS_PATH = BASE_DIR / "data" / "levels.json"
 MAX_CODE_LENGTH = 4000
 MAX_OUTPUT_LENGTH = 2000
 EXECUTION_TIMEOUT = 2.0
+FLOAT_COMPARISON_EPSILON = 1e-6
 
 SAFE_BUILTINS = {
     "abs": abs,
@@ -165,7 +167,7 @@ def trim_output(output: str) -> str:
 
 def values_match(result: object, expected: object) -> bool:
     if isinstance(expected, float) and isinstance(result, (float, int)):
-        return abs(result - expected) < 1e-6
+        return abs(result - expected) < FLOAT_COMPARISON_EPSILON
     return result == expected
 
 
@@ -338,9 +340,15 @@ class GameHandler(SimpleHTTPRequestHandler):
 
 
 def main() -> None:
+    host = os.environ.get("PYTHON_QUEST_HOST", "localhost")
+    port_value = os.environ.get("PYTHON_QUEST_PORT", "8000")
+    try:
+        port = int(port_value)
+    except ValueError:
+        port = 8000
     handler = partial(GameHandler, directory=str(STATIC_DIR))
-    server = ThreadingHTTPServer(("localhost", 8000), handler)
-    print("Python Quest running at http://localhost:8000")
+    server = ThreadingHTTPServer((host, port), handler)
+    print(f"Python Quest running at http://{host}:{port}")
     print("Press Ctrl+C to stop.")
     server.serve_forever()
 

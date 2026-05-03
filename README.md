@@ -19,3 +19,8 @@ python app.py
 ```
 
 Then open http://localhost:8000 in your browser.
+
+Optional environment variables:
+
+- `PYTHON_QUEST_HOST` (default: `localhost`)
+- `PYTHON_QUEST_PORT` (default: `8000`)
