@@ -6,6 +6,7 @@ import io
 import json
 import multiprocessing
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from functools import partial
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -171,6 +172,7 @@ def values_match(result: object, expected: object) -> bool:
 def run_checks(checks: list[dict], env: dict, stdout: str, tree: ast.AST) -> dict:
     messages: list[str] = []
     passed = True
+    missing = object()
     for check in checks:
         check_type = check.get("type")
         if check_type == "stdout_contains":
@@ -181,7 +183,8 @@ def run_checks(checks: list[dict], env: dict, stdout: str, tree: ast.AST) -> dic
         elif check_type == "variable_equals":
             name = check.get("name")
             expected = check.get("value")
-            if name not in env or env.get(name) != expected:
+            value = env.get(name, missing)
+            if value is missing or not values_match(value, expected):
                 passed = False
                 messages.append(check.get("failure", f"{name} did not match the expected value."))
         elif check_type == "function_returns":
@@ -335,7 +338,7 @@ class GameHandler(SimpleHTTPRequestHandler):
 
 
 def main() -> None:
-    handler = lambda *args, **kwargs: GameHandler(*args, directory=str(STATIC_DIR), **kwargs)
+    handler = partial(GameHandler, directory=str(STATIC_DIR))
     server = ThreadingHTTPServer(("localhost", 8000), handler)
     print("Python Quest running at http://localhost:8000")
     print("Press Ctrl+C to stop.")
